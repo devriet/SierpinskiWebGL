@@ -1,4 +1,7 @@
 var gl;
+var rotAngle = 0.0;
+var angleUni;
+var vertices;
 
 function main() {
     let canvas = document.getElementById("my-canvas");
@@ -20,7 +23,7 @@ function main() {
             // clear the color buffer
             gl.clear(gl.COLOR_BUFFER_BIT);
 
-            let vertices = [-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7];
+            vertices = [-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7];
             createGasket(vertices, 2000);
 
             // create a buffer
@@ -32,6 +35,7 @@ function main() {
 
             // obtain a reference to the shader variable (on the GPU)
             let posAttr = gl.getAttribLocation(prog, "vertexPos");
+            angleUni = gl.getUniformLocation(prog, "angle");
             gl.enableVertexAttribArray(posAttr);
             gl.vertexAttribPointer(posAttr,
                 2,         /* number of components per attribute, in our case (x,y) */
@@ -42,6 +46,7 @@ function main() {
             gl.drawArrays(gl.POINTS,
                 0,  /* starting index in the array */
                 vertices.length/2); /* number of vertices to draw */
+            window.requestAnimationFrame(updateMe);
         });
 }
 
@@ -64,6 +69,14 @@ function createGasket (inputArr, count) {
         p = q;
         c++;
     }
+}
+
+function updateMe (time) {
+    rotAngle = rotAngle + Math.PI / 180.0;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(angleUni, rotAngle);
+    gl.drawArrays(gl.POINT,0,vertices.length/2);
+    window.requestAnimationFrame(updateMe);
 }
 
 function drawIt() {
