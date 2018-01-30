@@ -24,7 +24,13 @@ function main() {
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             vertices = [-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7];
-            createGasket(vertices, 2000);
+//            createGasket(vertices, 2000);
+            let temp = [];
+            for (let i = 0; i < 6; i++){
+                temp.push(vertices[i]);
+            }
+            vertices = [];
+            createTriangle(temp, 4);
 
             // create a buffer
             let vertexBuff = gl.createBuffer();
@@ -43,10 +49,10 @@ function main() {
                 false,     /* does not require normalization */
                 0,         /* stride: number of bytes between the beginning of consecutive attributes */
                 0);        /* the offset (in bytes) to the first component in the attribute array */
-            gl.drawArrays(gl.POINTS,
+            gl.drawArrays(gl.TRIANGLES,
                 0,  /* starting index in the array */
                 vertices.length/2); /* number of vertices to draw */
-            window.requestAnimationFrame(updateMe);
+            //window.requestAnimationFrame(updateMe);
         });
 }
 
@@ -68,6 +74,31 @@ function createGasket (inputArr, count) {
         //Replace P with Q
         p = q;
         c++;
+    }
+}
+
+function createTriangle (inputArr, count) {
+    if (count < 1) {
+        //draw triangle
+        for (let i = 0; i < 6; i++) {
+            vertices.push(inputArr[i]);
+        }
+    } else {
+        let midpoints = [(inputArr[0] - ((inputArr[0] - inputArr[2])/2.0)),
+            (inputArr[1] - ((inputArr[1] - inputArr[3])/2.0)),
+            (inputArr[2] - ((inputArr[2] - inputArr[4])/2.0)),
+            (inputArr[3] - ((inputArr[3] - inputArr[5])/2.0)),
+            (inputArr[4] - ((inputArr[4] - inputArr[0])/2.0)),
+            (inputArr[5] - ((inputArr[5] - inputArr[1])/2.0))];
+        createTriangle([inputArr[0], inputArr[1],
+            midpoints[0], midpoints[1],
+            midpoints[4], midpoints[5]], count - 1);
+        createTriangle([inputArr[2], inputArr[3],
+            midpoints[2], midpoints[3],
+            midpoints[0], midpoints[1]], count - 1);
+        createTriangle([inputArr[4], inputArr[5],
+            midpoints[4], midpoints[5],
+            midpoints[2], midpoints[3]], count - 1);
     }
 }
 
