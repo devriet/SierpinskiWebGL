@@ -1,49 +1,40 @@
 var gl;
 var rotAngle = 0.0;
-var angleUni;
+var angleUni, colorUni, transAttribute;
 var vertices;
+var levSlider, spdSlider, randomizer;
+var levels;
+var increment = 0, lastUpdate = 0;
+var transx = 0.0, transy = 0.0;
+//var temp;
+var original = [-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7];
+var vertexBuff;
+var canvas;
 
 function main() {
-    let canvas = document.getElementById("my-canvas");
-
-    // setupWebGL is defined in webgl-utils.js
-    gl = WebGLUtils.setupWebGL(canvas);
-
+    initialSetup();
+    setupEventHandlers();
     // Load the shader pair. 2nd arg is vertex shader, 3rd arg is fragment shader
     ShaderUtils.loadFromFile(gl, "vshader.glsl", "fshader.glsl")
         .then( (prog) => {
-
             gl.useProgram(prog);
-            // Use black RGB=(0,0,0) for the clear color
-            gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-            // set up the 2D view port (0,0) is upper left (512,512) is lower right corner
-            gl.viewport(0, 0, canvas.width, canvas.height);
-
-            // clear the color buffer
-            gl.clear(gl.COLOR_BUFFER_BIT);
-
-            vertices = [-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7];
-//            createGasket(vertices, 2000);
-            let temp = [];
-            for (let i = 0; i < 6; i++){
-                temp.push(vertices[i]);
-            }
-            vertices = [];
-            createTriangle(temp, 4);
-
-            // create a buffer
-            let vertexBuff = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
-
-            // copy the vertices data
-            gl.bufferData(gl.ARRAY_BUFFER, Float32Array.from(vertices), gl.STATIC_DRAW);
-
-            // obtain a reference to the shader variable (on the GPU)
-            let posAttr = gl.getAttribLocation(prog, "vertexPos");
-            angleUni = gl.getUniformLocation(prog, "angle");
-            gl.enableVertexAttribArray(posAttr);
-            gl.vertexAttribPointer(posAttr,
+            gl.clearColor(0.0, 0.0, 0.0, 1.0); // Use black RGB=(0,0,0) for the clear color
+            gl.viewport(0, 0, canvas.width, canvas.height); // set up the 2D view port (0,0)
+                                            // is upper left (512,512) is lower right corner
+            gl.clear(gl.COLOR_BUFFER_BIT); // clear the color buffer
+            vertices = []; // empties the vertices array
+            createTriangle(original, levels); // makes a call to the function which creates the sierpinski triangles
+            vertexBuff = gl.createBuffer(); // create a buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff); // links the buffer here to the buffer in the vertex shader
+            gl.bufferData(gl.ARRAY_BUFFER, Float32Array.from(vertices), gl.STATIC_DRAW); // copy the vertices data
+            let posAttr = gl.getAttribLocation(prog, "vertexPos"); // obtain a reference to the shader variable (on the GPU)
+            transAttribute = gl.getUniformLocation(prog, "translation");
+            angleUni = gl.getUniformLocation(prog, "angle"); // obtains a reference to the angle in the vertex shader
+            colorUni = gl.getUniformLocation(prog, "mycolor"); // obtains a reference to the color in the fragment shader
+            //gl.uniform3f(colorUni, 0.7, 0.0, 0.4); // sets color
+            setRandomColor();
+            gl.enableVertexAttribArray(posAttr); //
+            gl.vertexAttribPointer(posAttr, //
                 2,         /* number of components per attribute, in our case (x,y) */
                 gl.FLOAT,  /* type of each attribute */
                 false,     /* does not require normalization */
@@ -52,8 +43,69 @@ function main() {
             gl.drawArrays(gl.TRIANGLES,
                 0,  /* starting index in the array */
                 vertices.length/2); /* number of vertices to draw */
-            //window.requestAnimationFrame(updateMe);
+            levSlider.oninput = function () {
+                levels = this.value;
+                for (let i = vertices.length; i > 0; i--) {
+                    vertices.pop();
+                }
+                console.log(vertices);
+                createTriangle([-0.8, -0.6,  0.7, -0.6,  -0.5, 0.7], levels);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                // gl.deleteBuffer(vertexBuff);
+                // gl.clear(gl.ARRAY_BUFFER);
+                // gl.clear(gl.COLOR_BUFFER_BIT);
+                vertexBuff = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+                gl.bufferData(gl.ARRAY_BUFFER, Float32Array.from(vertices), gl.STATIC_DRAW);
+                gl.drawArrays(gl.TRIANGLES,0,vertices.length/2);
+            };
+            window.requestAnimationFrame(updateMe);
+            window.requestAnimationFrame(animRedraw);
         });
+}
+
+function initialSetup() {
+    canvas = document.getElementById("my-canvas"); // obtains reference to canvas
+    levSlider = document.getElementById("levelSlider"); // obtains reference to slider
+    spdSlider = document.getElementById("speedSlider"); // obtains reference to slider
+    randomizer = document.getElementById("randomizer"); // obtains reference to slider
+    levels = levSlider.value; // takes value from slider reference
+    gl = WebGLUtils.setupWebGL(canvas); // setupWebGL is defined in webgl-utils.js
+}
+
+function setupEventHandlers() {
+    spdSlider.oninput = function () {
+        increment = this.value;
+    };
+    randomizer.oninput = function () {
+        window.requestAnimationFrame(setRandomColor());
+    };
+    document.addEventListener('keydown', function(event) {
+        if(event.keyCode == 37) {
+            transx -= 0.2;
+            //alert('Left was pressed');
+        }
+        else if(event.keyCode == 38) {
+            transy += 0.2;
+            //alert('Up was pressed');
+        }
+        else if(event.keyCode == 39) {
+            transx += 0.2;
+            //alert('Right was pressed');
+        }
+        else if(event.keyCode == 40) {
+            transy -= 0.2;
+            //alert('Down was pressed');
+        }
+        //transAttribute =
+    });
+}
+
+function setRandomColor() {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform3f(colorUni, Math.random(), Math.random(), Math.random()); // sets color
+    gl.bufferData(gl.ARRAY_BUFFER, Float32Array.from(vertices), gl.STATIC_DRAW);
+    //window.requestAnimationFrame(updateMe);
 }
 
 function createGasket (inputArr, count) {
@@ -103,11 +155,20 @@ function createTriangle (inputArr, count) {
 }
 
 function updateMe (time) {
-    rotAngle = rotAngle + Math.PI / 180.0;
+    rotAngle = rotAngle + (increment * (Math.PI / 180.0));
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(angleUni, rotAngle);
-    gl.drawArrays(gl.POINT,0,vertices.length/2);
+    gl.uniform2f(transAttribute, transx, transy);
+    gl.drawArrays(gl.TRIANGLES,0,vertices.length/2);
     window.requestAnimationFrame(updateMe);
+}
+
+function animRedraw (time) {
+    if (time - lastUpdate > 250) {
+
+    }
+
+    window.requestAnimationFrame(animRedraw);
 }
 
 function drawIt() {

@@ -1,4 +1,7 @@
 // in fshader.glsl
+precision mediump float;
+uniform vec3 mycolor;
 void main() {
-    gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);
+    gl_FragColor.rgb = mycolor;
+    gl_FragColor.a = 1.0;
 }

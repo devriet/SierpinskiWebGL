@@ -8,7 +8,11 @@
     <title>My First WebGL</title>
 </head>
 <body onload="main()">
-<p>Hello World!</p>
+<div class="slidecontainer">
+    <button type="button", id="randomizer">Randomize Color</button><br/>
+    Recursive levels: 0<input type="range" min="0" max="10" value="6" id="levelSlider">10<br/>
+    Rotation speed: 0<input type="range" min="0" max="10" value="0" id="speedSlider">10
+</div>
 <canvas id="my-canvas" width="512" height="512">
     Your browser does not support &lt;canvas&gt;
 </canvas>
